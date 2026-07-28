@@ -88,10 +88,6 @@ class FramerBase:
                 )
                 continue
             if (pdu := self.decoder.decode(frame_data)) is None:
-                # Preserve framing identity so the server can echo transaction/dev
-                # ids on the undecodable-function exception path (see #2990).
-                # Do not recover a function code from garbage payloads — noise on
-                # serial lines is the common cause of this path.
                 raise ModbusIOException(
                     "Unable to decode request",
                     transaction_id=tid,

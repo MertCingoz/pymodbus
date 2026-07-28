@@ -76,7 +76,8 @@ class ReadHoldingRegistersResponse(ModbusPDU):
         self.registers = []
         if (data_len := int(data[0])) >= len(data):
             raise ModbusIOException(
-                f"byte_count {data_len} > length of packet {len(data)}"
+                f"byte_count {data_len} > length of packet {len(data)}",
+                function_code=self.function_code,
             )
         for i in range(1, data_len, 2):
             self.registers.append(struct.unpack(">H", data[i : i + 2])[0])

@@ -223,14 +223,19 @@ class TestTransaction:
         elif scenario == 3:  # wait receive,timeout, no_responses
             transact.comm_params.timeout_connect = 0.1
             transact.connection_lost = mock.Mock()  # type: ignore[method-assign]
-            with pytest.raises(ModbusIOException):
+            with pytest.raises(ModbusIOException) as exc_info:
                 await transact.execute(False, request)
+            assert exc_info.value.fcode == request.function_code
+            assert exc_info.value.dev_id == request.dev_id
+            assert exc_info.value.transaction_id == request.transaction_id
         elif scenario == 4:  # wait receive,timeout, disconnect
             transact.comm_params.timeout_connect = 0.1
             transact.count_until_disconnect = -1
             transact.connection_lost = mock.Mock()  # type: ignore[method-assign]
-            with pytest.raises(ModbusIOException):
+            with pytest.raises(ModbusIOException) as exc_info:
                 await transact.execute(False, request)
+            assert exc_info.value.fcode == request.function_code
+            assert exc_info.value.transaction_id == request.transaction_id
         elif scenario == 5:  # wait receive,timeout, no_responses pass
             transact.comm_params.timeout_connect = 0.1
             transact.connection_lost = mock.Mock()  # type: ignore[method-assign]
@@ -242,8 +247,10 @@ class TestTransaction:
             await asyncio.sleep(0.1)
             resp.cancel()
             await asyncio.sleep(0.1)
-            with pytest.raises(ModbusIOException):
+            with pytest.raises(ModbusIOException) as exc_info:
                 await resp
+            assert exc_info.value.fcode == request.function_code
+            assert exc_info.value.dev_id == request.dev_id
         elif scenario == 7:  # response
             transact.comm_params.timeout_connect = 0.2
             resp = asyncio.create_task(transact.execute(False, request))
@@ -259,8 +266,11 @@ class TestTransaction:
             new_resp.dev_id = 17
             transact.response_future.set_result(new_resp)
             await asyncio.sleep(0.1)
-            with pytest.raises(ModbusIOException):
+            with pytest.raises(ModbusIOException) as exc_info:
                 resp.result()
+            assert exc_info.value.fcode == request.function_code
+            assert exc_info.value.dev_id == request.dev_id
+            assert exc_info.value.transaction_id == request.transaction_id
         else:  # if scenario == 9: # response wrong tid
             transact.comm_params.timeout_connect = 0.2
             resp = asyncio.create_task(transact.execute(False, request))
@@ -269,8 +279,11 @@ class TestTransaction:
             new_resp.transaction_id = 17
             transact.response_future.set_result(new_resp)
             await asyncio.sleep(0.1)
-            with pytest.raises(ModbusIOException):
+            with pytest.raises(ModbusIOException) as exc_info:
                 resp.result()
+            assert exc_info.value.fcode == request.function_code
+            assert exc_info.value.dev_id == request.dev_id
+            assert exc_info.value.transaction_id == request.transaction_id
 
     async def test_transaction_receiver(self, use_clc):
         """Test tracers in disconnect."""
@@ -449,13 +462,18 @@ class TestSyncTransaction:
             )
         elif scenario == 3:  # wait receive,timeout, no_responses
             transact.comm_params.timeout_connect = 0.1
-            with pytest.raises(ModbusIOException):
+            with pytest.raises(ModbusIOException) as exc_info:
                 transact.sync_execute(False, request)
+            assert exc_info.value.fcode == request.function_code
+            assert exc_info.value.dev_id == request.dev_id
+            assert exc_info.value.transaction_id == request.transaction_id
         elif scenario == 4:  # wait receive,timeout, disconnect
             transact.comm_params.timeout_connect = 0.1
             transact.count_until_disconnect = -1
-            with pytest.raises(ModbusIOException):
+            with pytest.raises(ModbusIOException) as exc_info:
                 transact.sync_execute(False, request)
+            assert exc_info.value.fcode == request.function_code
+            assert exc_info.value.transaction_id == request.transaction_id
         elif scenario == 5:  # wait receive,timeout, no_responses pass
             transact.comm_params.timeout_connect = 0.1
             with pytest.raises(ModbusIOException):
@@ -475,8 +493,11 @@ class TestSyncTransaction:
             transact.sync_get_response = mock.Mock(return_value=pdu)  # type: ignore[method-assign]
             transact.pdu_send = mock.Mock()  # type: ignore[method-assign]
             transact.comm_params.timeout_connect = 0.2
-            with pytest.raises(ModbusIOException):
+            with pytest.raises(ModbusIOException) as exc_info:
                 transact.sync_execute(False, request)
+            assert exc_info.value.fcode == request.function_code
+            assert exc_info.value.dev_id == request.dev_id
+            assert exc_info.value.transaction_id == request.transaction_id
         elif scenario == 8:  # response wrong tid
             transact.transport = 1  # type: ignore[assignment]
             pdu = copy.deepcopy(response)
@@ -484,8 +505,11 @@ class TestSyncTransaction:
             transact.sync_get_response = mock.Mock(return_value=pdu)  # type: ignore[method-assign]
             transact.pdu_send = mock.Mock()  # type: ignore[method-assign]
             transact.comm_params.timeout_connect = 0.2
-            with pytest.raises(ModbusIOException):
+            with pytest.raises(ModbusIOException) as exc_info:
                 transact.sync_execute(False, request)
+            assert exc_info.value.fcode == request.function_code
+            assert exc_info.value.dev_id == request.dev_id
+            assert exc_info.value.transaction_id == request.transaction_id
         else:  # if scenario == 9 # pdu_send from client
             transact.transport = 1  # type: ignore[assignment]
             transact.is_server = True
